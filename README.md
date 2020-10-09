@@ -2,7 +2,7 @@
 
 **Réalisé par :** Justin Foltz
 
-**Date :** 01/2020
+**Date :** 01.2020
 
 ## Le Projet
 
