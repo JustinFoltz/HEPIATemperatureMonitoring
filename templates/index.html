@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Dashboard</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" >
+        <style>
+            #container {
+                margin-top: 20px;
+                display: flex;
+                justify-content: center;
+            }
+            #parameters {
+                display: flex;
+                justify-content: space-around;
+                height: 130px;
+            }
+            .param {
+               height: 30px;
+            }
+            #subscribe {
+                display : block;
+                margin : auto;
+            }
+            #parameters_title, #parameters_content {
+                display : flex;
+                flex-direction: column;
+                justify-content: space-around;
+                margin-bottom: 15px;
+            }
+            .card {
+                margin: auto;
+            }
+            #number_connexions {
+                font-size: 0.8em;
+            }
+            #graph {
+                width: 1650px;
+                height: 250px;
+                margin:auto;
+                margin-top: 50px;
+                display:flex
+            }
+            .chart {
+                width: 500px;
+                height: 250px;
+                margin-left: 25px;
+            }
+            .liste {
+                display:flex;
+                align-items: center;
+                padding:0;
+                margin-top:5px;
+            }
+            .topic {
+                text-align: left;
+                margin: 0 !important;
+                padding: 0;
+            }
+
+        </style>
+    </head>
+
+    <body>   
+        <div id="container">
+            <div class="card text-center"  style="width: 18rem;" >
+                <div class="card-header text-center">
+                    Subscribe
+                    <div id="number_connexions"></div>
+                </div>
+                <div class="card-body">
+                    <div id="supervision" >
+                        <div id="parameters">
+                            <div id="parameters_title">
+                                <div id="sensors_title" class="param">Sensor : </div>
+                                <div id="durations_title" class="param">Duration : </div>
+                                <div id="locations_title" class="param">Location : </div>
+                                <div id="from_title" class="param">From : </div>
+                            </div>
+                            <div id="parameters_content">
+                                <select id="sensors" class="form-control form-control-sm"></select>
+                                <select id="durations" class="form-control form-control-sm "></select>
+                                <select id="locations" class="form-control form-control-sm"></select>
+                                <input id="from" class="form-control form-control-sm" type="date"/>
+                            </div>
+                        </div>
+                        <button id="subscribe" type="button" class="btn btn-info">subscribe</button>
+                    </div>
+                </div>
+            </div>
+            <div class="cardListe card text-center"  style="width: 18rem;" >
+                <div class="card-header text-center">Subscription list</div>
+                <div class="card-body">
+                    <ul class="listUl list-group"> </ul>
+                </div>
+            </div>
+        </div>
+        <div id="graph">
+            <div class="chart"><h4>Temperature</h4><canvas id="chartTemp" class="chartC"></canvas></div>
+            <div class="chart"><h4>Humidity</h4><canvas id="chartHum"></canvas></div>
+            <div class="chart"><h4>Luminance</h4><canvas id="chartLum"></canvas></div>
+        </div>
+</body>
+
+        <script>
+
+            const socket = io("http://localhost:5001");
+            let rooms = []
+            let available_locations = []
+            let available_durations = []
+
+            let ctxTemp = $('#chartTemp');
+            let chartTemp = new Chart(ctxTemp, {
+                type: 'line',
+                data: {datasets: []},
+                options: {
+                    scales: {
+                        xAxes: [{
+                            type: 'time',
+                            time: {
+                                unit: 'minute',
+                                unitStepSize: 0.5,
+                                displayFormats: {
+                                    'minute': 'DD-MMM-YYYY HH:mm'
+                                },
+                            },
+                            ticks:{
+                                autoSkip: true,
+                                maxTicksLimit: 20,
+                            },
+                        }]
+                    }
+                }
+            });
+
+            let ctxHum = $('#chartHum');
+            let chartHum = new Chart(ctxHum, {
+                type: 'line',
+                data: {datasets: []},
+                options: {
+                    scales: {
+                        xAxes: [{
+                            type: 'time',
+                            time: {
+                                unit: 'minute',
+                                unitStepSize: 0.5,
+                                displayFormats: {
+                                    'minute': 'DD-MMM-YYYY HH:mm'
+                                },
+                            },
+                            ticks:{
+                                autoSkip: true,
+                                maxTicksLimit: 20,
+                            },
+                        }]
+                    }
+                }
+            });
+
+            let ctxLum = $('#chartLum');
+            let chartLum = new Chart(ctxLum, {
+                type: 'line',
+                data: {datasets: []},
+                options: {
+                    scales: {
+                        xAxes: [{
+                            type: 'time',
+                            time: {
+                                unit: 'minute',
+                                unitStepSize: 0.5,
+                                displayFormats: {
+                                    'minute': 'DD-MMM-YYYY HH:mm'
+                                },
+                            },
+                            ticks:{
+                                autoSkip: true,
+                                maxTicksLimit: 20,
+                            },
+                        }]
+                    }
+                }
+            });
+
+            $('#graph').hide();
+            $('.cardListe').hide();
+            
+            socket.on('number_connexions', function(number) {
+                console.log("RECEIVE NEW NUMBER");
+                $("#number_connexions").empty();
+                $('#number_connexions').html("<i>Users conected : " + number+"<i>");
+            });
+
+            $("#subscribe").click( () => {
+                let sensor = $('#sensors').val();
+                let location = $('#locations').val();
+                let interval =  $("#durations").val();
+                let from_timestamp = (new Date($("#from").val())).getTime()/1000;
+                let room = sensor + "/" + location + "/" + interval;
+
+                if(!rooms.some( r => r === room)) {
+                    rooms.push(room);   
+                    setTimeout(() => {
+                        let color = randomChartColor();
+                        chartTemp.data.datasets.push( {label: room, borderColor: color['line'], backgroundColor: color['back'], borderWidth: 1,data: []} );
+                        chartHum.data.datasets.push( {label: room, borderColor: color['line'], backgroundColor: color['back'], borderWidth: 1,data: []} );
+                        chartLum.data.datasets.push( {label: room, borderColor: color['line'], backgroundColor: color['back'], borderWidth: 1,data: []} );
+                        $(".list-group").append( addItem( room ));
+                        socket.emit('subscribe', data={from:from_timestamp, room:room});
+                    }, 1000);
+                }
+                 if( rooms.length !== 0) {
+                    $('#graph').show();
+                    $('.cardListe').show();
+                }
+            });
+
+            $(document.body).on('click', "#delete", function(e){
+
+                let id = String( e.target.getAttribute('dataID'));
+                removeData(chartTemp, id);
+                removeData(chartHum, id);
+                removeData(chartLum, id);
+                
+                let roomID = id.split('/').join("\\/");
+                $("#"+roomID).remove();
+                
+                rooms = rooms.filter(room => room !== id);
+                socket.emit('unsubscribe', data={"room":id});
+                if( rooms.length === 0) {
+                    $('#graph').hide();
+                    $('.cardListe').hide();S
+                } 
+            });
+
+            socket.on('measure', function(data) {
+                console.log(data);
+                let label = data["tag"]
+                let timestamp = parseFloat(data["timestamp"])*1000;
+                let temperature = parseFloat(data["measure"]["temperature"]);
+                let humidity = parseFloat(data["measure"]["humidity"]);
+                let luminance = parseFloat(data["measure"]["luminance"]);
+                
+                let date = new Date(timestamp);
+                let format = new Date(timestamp).toLocaleString();
+            
+                addData(chartTemp, format, label, {t:date, y:temperature});
+                addData(chartHum, format, label, {t:date, y:humidity});
+                addData(chartLum, format, label, {t:date, y:luminance});
+            });
+
+            //socket.on('measure', function(data) {
+            //    console.log(data);
+            //    let timestamp = parseFloat(data["data"]["updateTime"])*1000;
+            //    let temperature = parseFloat(data["data"]["data"]["temperature"]);
+            //    let humidity = parseFloat(data["data"]["data"]["humidity"]);
+            //    let luminance = parseFloat(data["data"]["data"]["luminance"]);
+            //    let label = data["label"]
+
+            //    let date = new Date(timestamp);
+            //    let format = new Date(timestamp).toLocaleString();
+            
+            //    addData(chartTemp, format, label, {t:date, y:temperature});
+            //    addData(chartHum, format, label, {t:date, y:humidity});
+            //    addData(chartLum, format, label, {t:date, y:luminance});
+            //});
+
+            socket.on('sensors', function(data) {
+                $("#sensors").empty();
+                data.map(d => d["sensor"]).forEach(sensor => $("#sensors").append(radioList(sensor, "sensors")));
+                available_locations = data.map(d => {return {sensor:d["sensor"], locations:d["locations"]}});
+                available_durations = data.map(d => {return {sensor:d["sensor"], durations:d["durations"]}});
+                setListsParameters( $('#sensors').val() );
+            });
+
+            $('#sensors').on('input', function() {
+                setListsParameters( $('#sensors').val() );
+            });
+
+            function setListsParameters(sensor) {
+                $("#durations").empty();
+                available_durations.filter(ad => ad["sensor"] === sensor)
+                                   .map(durationList => durationList["durations"]).flat()
+                                   .forEach(duration => $("#durations").append(radioList(duration)));
+                $("#locations").empty();
+                available_locations.filter(al => al["sensor"] === sensor)
+                                   .map(locationList => locationList["locations"]).flat()
+                                   .forEach(location => $("#locations").append(radioList(location)));
+            }
+    
+            let radioList = (item) => {
+                return `<option>${item}</option>`
+            }
+
+            function addData(chart, format, label, data) {
+                chart.data.datasets.forEach( (dataset) => {
+                    if(dataset.label === label)
+                        dataset.data.push(data);
+                });
+                chart.update();
+            }
+
+            function removeData(chart, labelName) {
+                chart.data.datasets = chart.data.datasets.filter( d => d.label !== labelName );
+                chart.update();
+            }
+
+            let addItem = (id) => {
+                return `
+                    <li id="${id}" class="list-group-item border-0 liste ">
+                        <div class="col-8 topic ">${id}</div>
+                        <button id="delete" type="button" dataID="${id}" class=" $btn btn-danger col-4"">delete</button> 
+                    </li>      `
+            } 
+
+            let randColor = () => {
+                return [Math.floor(Math.random()*Math.floor(256)), 
+                        Math.floor(Math.random()*Math.floor(256)),
+                        Math.floor(Math.random()*Math.floor(256))
+            ]};
+
+            let randomChartColor = () => {
+                const color = randColor();
+                return { line: 'rgba('+color[0]+','+color[1]+','+color[2]+',1)',
+                         back: 'rgba('+color[0]+','+color[1]+','+color[2]+',0.1)'
+                }
+            }
+        </script>
+
+   
+</html>
+
