@@ -8,7 +8,7 @@
 
 HEPIA temperature monitoring consists in setting up an infrastructure to monitor the evolution of the temperature of HEPIA's rooms. The data is collected from Raspberry installed in the different rooms and from the Bluetooth modules within range. The information is displayed in the form of graphs on a web interface. It is possible to monitor the evolution of the temperature from live data or to consult the history of the readings.
 
-![](/home/justin/Documents/github/TemperatureMonitoring/img/desktop.jpg)
+![](./img/desktop.jpg)
 
 ## Technologies
 
