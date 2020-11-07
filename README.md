@@ -23,7 +23,7 @@ HEPIA temperature monitoring consists in setting up an infrastructure to monitor
 - ChartJS: graphical representation of the evolution of data over time
 
 
-## How to run the project
+## How to run the project ?
 
 1. Clone the repository
 
